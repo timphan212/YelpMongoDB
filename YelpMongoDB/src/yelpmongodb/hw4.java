@@ -6,6 +6,10 @@
 
 package yelpmongodb;
 
+import com.mongodb.Block;
+import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoDatabase;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -18,6 +22,7 @@ import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import org.bson.Document;
 
 /**
  *
@@ -697,8 +702,8 @@ public class hw4 extends javax.swing.JFrame {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(hw4.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
+        //</editor-fold>        
+        
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -710,9 +715,27 @@ public class hw4 extends javax.swing.JFrame {
     private void checkMainCategories() {
         ArrayList<String> list = getCategories(mainCategoriesPanel);
         removeComponents(attributesPanel, attributesScrollBar);
+        MongoClient client = new MongoClient();
+        MongoDatabase db = client.getDatabase("db");
         
         if(list.size() > 0) {
-            
+            if(list.size() > 1) {
+                //create AND query
+            }
+            else {
+                //create single find query
+                Document doc = new Document();
+                //doc.append(key, value);
+                FindIterable<Document> iter = db.getCollection("business")
+                        .find(new Document("city", "Phoenix")).limit(5);
+                iter.forEach(new Block<Document>() {
+
+                    @Override
+                    public void apply(Document t) {
+                        System.out.println(t);
+                    }
+                });
+            }
         }
     }
     
