@@ -53,7 +53,7 @@
                               <Component id="mainCategoriesScroll" pref="0" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="poiSelection" max="32767" attributes="0"/>
+                                  <Component id="poiSelection" pref="238" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -71,7 +71,7 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="businessesScrollBar" pref="528" max="32767" attributes="0"/>
+                      <Component id="businessesScrollBar" pref="490" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="searchText" min="-2" max="-2" attributes="0"/>
@@ -525,11 +525,12 @@
         <Component class="javax.swing.JComboBox" name="poiSelection">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="4">
-                <StringItem index="0" value="Item 1"/>
-                <StringItem index="1" value="Item 2"/>
-                <StringItem index="2" value="Item 3"/>
-                <StringItem index="3" value="Item 4"/>
+              <StringArray count="5">
+                <StringItem index="0" value="5415 Monona Dr\nMonona, WI 53716"/>
+                <StringItem index="1" value="2819 N Central Ave\nPhoenix, AZ 85004"/>
+                <StringItem index="2" value="16770 North Perimeter Drive\nScottsdale, AZ 85260"/>
+                <StringItem index="3" value="4450 N. Lamb Blvd.\nLas Vegas, NV 89115"/>
+                <StringItem index="4" value="546 N Grand Ave\nSun Prairie, WI 53590"/>
               </StringArray>
             </Property>
           </Properties>

@@ -461,7 +461,7 @@ public class hw4 extends javax.swing.JFrame {
 
         poiText.setText("Point of Interest:");
 
-        poiSelection.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        poiSelection.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "5415 Monona Dr\\nMonona, WI 53716", "2819 N Central Ave\\nPhoenix, AZ 85004", "16770 North Perimeter Drive\\nScottsdale, AZ 85260", "4450 N. Lamb Blvd.\\nLas Vegas, NV 89115", "546 N Grand Ave\\nSun Prairie, WI 53590" }));
 
         proximityText.setText("Proximity:");
 
@@ -496,7 +496,7 @@ public class hw4 extends javax.swing.JFrame {
                             .addComponent(mainCategoriesScroll, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addGroup(mainPanelLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(poiSelection, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addComponent(poiSelection, 0, 238, Short.MAX_VALUE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addContainerGap()
@@ -508,7 +508,7 @@ public class hw4 extends javax.swing.JFrame {
                     .addComponent(proximitySelection, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(businessesScrollBar, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
+                    .addComponent(businessesScrollBar, javax.swing.GroupLayout.DEFAULT_SIZE, 490, Short.MAX_VALUE)
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(searchText)
