@@ -6,14 +6,18 @@
 
 package yelpmongodb;
 
-import com.mongodb.Block;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoDatabase;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -22,7 +26,6 @@ import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import org.bson.Document;
 
 /**
  *
@@ -659,17 +662,15 @@ public class hw4 extends javax.swing.JFrame {
     }//GEN-LAST:event_transportCheckBoxActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        String poi, proximity;
         DefaultTableModel table = (DefaultTableModel) businessesTable.getModel();
         table.setRowCount(0);
-
-        poi = (String) poiSelection.getItemAt(poiSelection.getSelectedIndex());
-        proximity = (String) proximitySelection.getItemAt(proximitySelection.getSelectedIndex());
-
+        String poi = (String) poiSelection.getItemAt(poiSelection.getSelectedIndex());
+        String proximity = (String) proximitySelection.getItemAt(proximitySelection.getSelectedIndex());
+        ArrayList<String> maincat = getCategories(mainCategoriesPanel);
         ArrayList<String> att = getCategories(attributesPanel);
 
-        if(att.size() > 0) {
-            
+        if(maincat.size() > 0 && att.size() > 0) {
+            queryBusinesses(poi, proximity, maincat, att);
         }
     }//GEN-LAST:event_searchButtonActionPerformed
 
@@ -714,28 +715,45 @@ public class hw4 extends javax.swing.JFrame {
     
     private void checkMainCategories() {
         ArrayList<String> list = getCategories(mainCategoriesPanel);
+        ArrayList<String> attList = new ArrayList<>();
         removeComponents(attributesPanel, attributesScrollBar);
         MongoClient client = new MongoClient();
-        MongoDatabase db = client.getDatabase("db");
+        DB db = client.getDB("db");
+        DBCollection coll = db.getCollection("business");
+        BasicDBList and = new BasicDBList();
+        String attribute = "";
         
         if(list.size() > 0) {
-            if(list.size() > 1) {
-                //create AND query
+            for(String entry : list) {
+                DBObject clause = new BasicDBObject("categories", entry);
+                and.add(clause);
             }
-            else {
-                //create single find query
-                Document doc = new Document();
-                //doc.append(key, value);
-                FindIterable<Document> iter = db.getCollection("business")
-                        .find(new Document("city", "Phoenix")).limit(5);
-                iter.forEach(new Block<Document>() {
-
-                    @Override
-                    public void apply(Document t) {
-                        System.out.println(t);
+            
+            DBObject query = new BasicDBObject("$and", and);
+            List curs = coll.distinct("attributes", query);
+            
+            for(int i = 0; i < curs.size(); i++) {
+                BasicDBObject dbo = (BasicDBObject) curs.get(i);
+                
+                for(Entry<String, Object> entry : dbo.entrySet()) {
+                    if(entry.getValue() instanceof BasicDBObject) {
+                        BasicDBObject nestedobj = (BasicDBObject) entry.getValue();
+                        for(Entry<String, Object> nestedentry : nestedobj.entrySet()) {
+                            attribute = entry.getKey() + ":" + nestedentry.getKey()
+                                    + ":" + nestedentry.getValue();
+                        }
                     }
-                });
+                    else {
+                        attribute = entry.getKey() + ":" + entry.getValue();
+                    }
+                    if(!(attList.contains(attribute))) {
+                        attList.add(attribute);
+                    }
+                }
             }
+            
+            createAttributeCheckBox(attList);
+            client.close();
         }
     }
     
@@ -833,4 +851,18 @@ public class hw4 extends javax.swing.JFrame {
     private javax.swing.JCheckBox shoppingCheckBox;
     private javax.swing.JCheckBox transportCheckBox;
     // End of variables declaration//GEN-END:variables
+
+    private void createAttributeCheckBox(ArrayList<String> attList) {
+        attributesPanel.setLayout(new GridLayout(attList.size(), 1));
+        
+        for(String entry : attList) {
+            JCheckBox jcb = new JCheckBox(entry);
+            attributesPanel.add(jcb);
+            attributesScrollBar.updateUI();
+        }
+    }
+
+    private void queryBusinesses(String poi, String proximity, ArrayList<String> maincat, ArrayList<String> att) {
+        
+    }
 }
