@@ -10,6 +10,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import java.awt.Component;
@@ -863,6 +864,49 @@ public class hw4 extends javax.swing.JFrame {
     }
 
     private void queryBusinesses(String poi, String proximity, ArrayList<String> maincat, ArrayList<String> att) {
+        BasicDBList mainList = new BasicDBList();
+        BasicDBList attList = new BasicDBList();
+        BasicDBList businessList = new BasicDBList();
+        DBObject attquery;
+        MongoClient client = new MongoClient();
+        DB db = client.getDB("db");
+        DBCollection coll = db.getCollection("business");
         
+        for(String entry : maincat) {
+            DBObject clause = new BasicDBObject("categories", entry);
+            mainList.add(clause);
+        }
+        
+        for(String entry : att) {
+            String[] attribute = entry.split(":");
+            
+            if(attribute.length == 3) {
+                DBObject clause = new BasicDBObject("attributes." + attribute[0] 
+                        + "." + attribute[1], attribute[2]);
+                attList.add(clause);
+            }
+            else {
+                DBObject clause = new BasicDBObject("attributes." + attribute[0], attribute[1]);
+                attList.add(clause);
+            }
+        }
+        
+        DBObject mainquery =  new BasicDBObject("$and", mainList);
+        
+        if(searchSelection.getSelectedIndex() == 0) {
+            attquery = new BasicDBObject("$and", attList);
+        }
+        else {
+            attquery = new BasicDBObject("$or", attList);
+        }
+        
+        businessList.add(mainquery);
+        businessList.add(attquery);
+        DBObject businessQuery = new BasicDBObject("$and", businessList);
+        DBCursor curs = coll.find(businessQuery);
+        
+        while(curs.hasNext()) {
+            System.out.println(curs.next());
+        }
     }
 }
