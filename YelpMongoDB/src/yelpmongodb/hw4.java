@@ -786,7 +786,6 @@ public class hw4 extends javax.swing.JFrame {
     
     private void createReviewTable(String name, String city, String state, String rating) {
         String columnNames[] = new String[] {"Date", "Rating", "Review Text", "Username", "Useful Votes"};
-        
         JFrame frame = new JFrame("Reviews");
         frame.setMinimumSize(new Dimension(1000, 600));
         JPanel panel = new JPanel();
@@ -796,10 +795,27 @@ public class hw4 extends javax.swing.JFrame {
         model.setColumnIdentifiers(columnNames);
         JScrollPane scrollPane = new JScrollPane(table);
         
-        /*while(rs.next()) {
-            model.addRow(new Object[]{rs.getString(1), rs.getInt(2), rs.getString(3), rs.getString(4), rs.getInt(5)});
-        }*/
+        String bid = getBusinessID(name, city, state, Double.parseDouble(rating));
         
+        MongoClient client = new MongoClient();
+        DB db = client.getDB("db");
+        DBCollection coll = db.getCollection("review");
+        String username = "";
+        DBObject clause = new BasicDBObject("business_id", bid);
+        DBCursor cursor = coll.find(clause);
+        
+        while(cursor.hasNext()) {
+            DBObject dbo = cursor.next();
+            String userid = dbo.get("user_id").toString();
+            coll = db.getCollection("user");
+            clause = new BasicDBObject("user_id", userid);
+            DBCursor userCursor = coll.find(clause);
+            username = userCursor.next().get("name").toString();
+            DBObject voteList = (DBObject) dbo.get("votes");
+            model.addRow(new Object[]{dbo.get("date"), dbo.get("stars"), dbo.get("text"), username, voteList.get("useful")});
+        }
+        
+        client.close();
         panel.add(scrollPane);
         frame.add(panel);
         frame.pack();
@@ -889,7 +905,6 @@ public class hw4 extends javax.swing.JFrame {
         
         while(iter.hasNext()) {
             DBObject dbo = (DBObject) iter.next();
-            System.out.println(dbo.get("stars"));
             table.addRow(new Object[]{dbo.get("name"), dbo.get("city"), dbo.get("state"), (double) dbo.get("stars")});
         }
         
@@ -1031,5 +1046,26 @@ public class hw4 extends javax.swing.JFrame {
                 .add("loc", new BasicDBObject("$geoWithin", new BasicDBObject("$center", params))).get();
         
         return match;
+    }
+    
+    private String getBusinessID(String name, String city, String state, double rating) {
+        MongoClient client = new MongoClient();
+        DB db = client.getDB("db");
+        DBCollection coll = db.getCollection("business"); 
+        BasicDBList businessID = new BasicDBList();
+        DBObject bclause = new BasicDBObject("name", name);
+        DBObject bclause2 = new BasicDBObject("city", city);
+        DBObject bclause3 = new BasicDBObject("state", state);
+        DBObject bclause4 = new BasicDBObject("stars", rating);
+        businessID.add(bclause);
+        businessID.add(bclause2);
+        businessID.add(bclause3);
+        businessID.add(bclause4);
+        DBObject businessQuery = new BasicDBObject("$and", businessID);
+        DBCursor cursor = coll.find(businessQuery);
+        String bid = cursor.next().get("business_id").toString();   
+        client.close();
+        
+        return bid;
     }
 }
