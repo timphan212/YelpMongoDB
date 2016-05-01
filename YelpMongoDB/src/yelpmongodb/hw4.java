@@ -6,6 +6,7 @@
 
 package yelpmongodb;
 
+import com.mongodb.AggregationOutput;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
@@ -19,6 +20,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import static java.lang.Math.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -863,21 +866,26 @@ public class hw4 extends javax.swing.JFrame {
     private void queryBusinesses(double[] poi, int proximity, ArrayList<String> maincat, ArrayList<String> att) {
         MongoClient client = new MongoClient();
         DB db = client.getDB("db");
-        DBCollection coll = db.getCollection("business");
-        DBObject mainQuery = mainCategoriesQuery(maincat);
-        DBObject attquery = attributesQuery(att);
-        BasicDBList businessList = new BasicDBList();        
-        businessList.add(mainQuery);
-        businessList.add(attquery);
-        DBObject businessQuery = new BasicDBObject("$and", businessList);
-        DBCursor curs = coll.find(businessQuery);
-
-        
+        DBCollection coll = db.getCollection("business");  
+        String[] arr = {"$longitude", "$latitude"};
         List<DBObject> aggregate = new ArrayList<>();
+        
         DBObject project = BasicDBObjectBuilder.start().push("$project")
-                .add("", "").get();
-        while(curs.hasNext()) {
-            System.out.println(curs.next());
+                .add("loc", arr).add("business_id", "$business_id")
+                .add("name", "$name").add("city", "$city").add("state", "$state")
+                .add("stars", "$stars").add("attributes", "$attributes")
+                .add("categories", "$categories").get();
+        DBObject geoMatch = getGeoQuery(poi, proximity, 3963.2);
+        DBObject mainMatch = getMainCatQuery(maincat);
+        DBObject attMatch = getAttributeQuery(att);
+        aggregate.add(project);
+        aggregate.add(geoMatch);
+        aggregate.add(mainMatch);
+        AggregationOutput aggrcurs = coll.aggregate(aggregate);
+        Iterable<DBObject> res = aggrcurs.results();
+        Iterator iter = res.iterator();
+        while(iter.hasNext()) {
+            System.out.println(iter.next());          
         }
         
         client.close();
@@ -999,5 +1007,38 @@ public class hw4 extends javax.swing.JFrame {
         }
             
         return lnglat;
+    }
+    
+    private DBObject getGeoQuery(double[] lnglat, int proximity, double radius) {
+        BasicDBList coords = new BasicDBList();
+        coords.add(lnglat[0]);
+        coords.add(lnglat[1]);
+        BasicDBList params = new BasicDBList();
+        params.add(coords);
+        params.add(proximity/radius);
+        
+        DBObject match = BasicDBObjectBuilder.start().push("$match")
+                .add("loc", new BasicDBObject("$geoWithin", new BasicDBObject("$center", params))).get();
+        
+        return match;
+    }
+    
+    private DBObject getMainCatQuery(ArrayList<String> mainCatList) {
+        BasicDBList mainQueryList = new BasicDBList();
+        
+        for(String entry : mainCatList) {
+            DBObject clause = new BasicDBObject("categories", entry);
+            mainQueryList.add(clause);
+        }
+        
+        DBObject mainQuery = new BasicDBObject("$match", new BasicDBObject("$and", mainQueryList));
+        
+        return mainQuery;
+    }
+
+    private DBObject getAttributeQuery(ArrayList<String> att) {
+        BasicDBObjectBuilder match = BasicDBObjectBuilder.start().push("$match");
+        
+        return match.get();
     }
 }
