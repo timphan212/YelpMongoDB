@@ -8,6 +8,7 @@ package yelpmongodb;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -16,6 +17,7 @@ import com.mongodb.MongoClient;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import static java.lang.Math.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -666,8 +668,8 @@ public class hw4 extends javax.swing.JFrame {
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         DefaultTableModel table = (DefaultTableModel) businessesTable.getModel();
         table.setRowCount(0);
-        String poi = (String) poiSelection.getItemAt(poiSelection.getSelectedIndex());
-        String proximity = (String) proximitySelection.getItemAt(proximitySelection.getSelectedIndex());
+        double[] poi = getPointOfInterest();
+        int proximity = getProximity();
         ArrayList<String> maincat = getCategories(mainCategoriesPanel);
         ArrayList<String> att = getCategories(attributesPanel);
 
@@ -723,7 +725,7 @@ public class hw4 extends javax.swing.JFrame {
         DB db = client.getDB("db");
         DBCollection coll = db.getCollection("business");
         String attribute = "";
-        
+
         if(list.size() > 0) {
             DBObject mainQuery = mainCategoriesQuery(list);
             List curs = coll.distinct("attributes", mainQuery);
@@ -858,7 +860,7 @@ public class hw4 extends javax.swing.JFrame {
         }
     }
 
-    private void queryBusinesses(String poi, String proximity, ArrayList<String> maincat, ArrayList<String> att) {
+    private void queryBusinesses(double[] poi, int proximity, ArrayList<String> maincat, ArrayList<String> att) {
         MongoClient client = new MongoClient();
         DB db = client.getDB("db");
         DBCollection coll = db.getCollection("business");
@@ -870,9 +872,15 @@ public class hw4 extends javax.swing.JFrame {
         DBObject businessQuery = new BasicDBObject("$and", businessList);
         DBCursor curs = coll.find(businessQuery);
 
+        
+        List<DBObject> aggregate = new ArrayList<>();
+        DBObject project = BasicDBObjectBuilder.start().push("$project")
+                .add("", "").get();
         while(curs.hasNext()) {
             System.out.println(curs.next());
         }
+        
+        client.close();
     }
     
     private DBObject mainCategoriesQuery(ArrayList<String> mainList) {
@@ -956,5 +964,40 @@ public class hw4 extends javax.swing.JFrame {
         sc.nextInt();
         
         return !sc.hasNext();
+    }
+    
+    private int getProximity() {
+        String distance = (String) proximitySelection.getSelectedItem();
+        String[] distArr = distance.split(" ");
+        
+        return Integer.parseInt(distArr[0]);
+    }
+
+    private double[] getPointOfInterest() {
+        int index = poiSelection.getSelectedIndex();
+        double[] lnglat = new double[2];
+        
+        if(index == 0) {
+            lnglat[0] = -89.326097500000003;
+            lnglat[1] = 43.0605902;
+        }
+        else if(index == 1) {
+            lnglat[0] = -112.0734183;
+            lnglat[1] = 33.479541599999997;
+        }
+        else if(index == 2) {
+            lnglat[0] = -111.896652;
+            lnglat[1] = 33.637824000000002;
+        }
+        else if(index == 3) {
+            lnglat[0] = -115.0794033;
+            lnglat[1] = 36.2414968;
+        }
+        else {
+            lnglat[0] = -89.219459000000001;
+            lnglat[1] = 43.192062999999997;
+        }
+            
+        return lnglat;
     }
 }
