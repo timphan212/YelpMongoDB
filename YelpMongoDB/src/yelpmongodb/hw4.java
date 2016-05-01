@@ -101,8 +101,8 @@ public class hw4 extends javax.swing.JFrame {
         closeButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(1000, 700));
-        setPreferredSize(new java.awt.Dimension(1000, 700));
+        setMinimumSize(new java.awt.Dimension(1100, 700));
+        setPreferredSize(new java.awt.Dimension(1100, 700));
         getContentPane().setLayout(null);
 
         mainPanel.setMinimumSize(new java.awt.Dimension(1000, 675));
@@ -730,7 +730,7 @@ public class hw4 extends javax.swing.JFrame {
         String attribute = "";
 
         if(list.size() > 0) {
-            DBObject mainQuery = mainCategoriesQuery(list);
+            DBObject mainQuery = mainCategoriesQuery(list, 0);
             List curs = coll.distinct("attributes", mainQuery);
             
             for(int i = 0; i < curs.size(); i++) {
@@ -876,30 +876,40 @@ public class hw4 extends javax.swing.JFrame {
                 .add("stars", "$stars").add("attributes", "$attributes")
                 .add("categories", "$categories").get();
         DBObject geoMatch = getGeoQuery(poi, proximity, 3963.2);
-        DBObject mainMatch = getMainCatQuery(maincat);
-        DBObject attMatch = getAttributeQuery(att);
+        DBObject mainMatch = mainCategoriesQuery(maincat, 1);
+        DBObject attMatch = attributesQuery(att);
         aggregate.add(project);
         aggregate.add(geoMatch);
         aggregate.add(mainMatch);
+        aggregate.add(attMatch);
         AggregationOutput aggrcurs = coll.aggregate(aggregate);
         Iterable<DBObject> res = aggrcurs.results();
         Iterator iter = res.iterator();
+        DefaultTableModel table = (DefaultTableModel) businessesTable.getModel();
+        
         while(iter.hasNext()) {
-            System.out.println(iter.next());          
+            DBObject dbo = (DBObject) iter.next();
+            System.out.println(dbo.get("stars"));
+            table.addRow(new Object[]{dbo.get("name"), dbo.get("city"), dbo.get("state"), (double) dbo.get("stars")});
         }
         
         client.close();
     }
     
-    private DBObject mainCategoriesQuery(ArrayList<String> mainList) {
+    private DBObject mainCategoriesQuery(ArrayList<String> mainList, int queryFlag) {
         BasicDBList mainQueryList = new BasicDBList();
+        DBObject mainQuery = null;
         
         for(String entry : mainList) {
             DBObject clause = new BasicDBObject("categories", entry);
             mainQueryList.add(clause);
         }
-        
-        DBObject mainQuery = new BasicDBObject("$and", mainQueryList);
+        if(queryFlag == 0) {
+            mainQuery = new BasicDBObject("$and", mainQueryList);
+        }
+        else {
+            mainQuery = new BasicDBObject("$match", new BasicDBObject("$and", mainQueryList));
+        }
         
         return mainQuery;
     }
@@ -920,7 +930,7 @@ public class hw4 extends javax.swing.JFrame {
             attQuery = new BasicDBObject("$or", attList);
         }
         
-        return attQuery;
+        return new BasicDBObject("$match", attQuery);
     }
     
     private DBObject attributeTypeFormat(String[] attribute) {
@@ -1021,24 +1031,5 @@ public class hw4 extends javax.swing.JFrame {
                 .add("loc", new BasicDBObject("$geoWithin", new BasicDBObject("$center", params))).get();
         
         return match;
-    }
-    
-    private DBObject getMainCatQuery(ArrayList<String> mainCatList) {
-        BasicDBList mainQueryList = new BasicDBList();
-        
-        for(String entry : mainCatList) {
-            DBObject clause = new BasicDBObject("categories", entry);
-            mainQueryList.add(clause);
-        }
-        
-        DBObject mainQuery = new BasicDBObject("$match", new BasicDBObject("$and", mainQueryList));
-        
-        return mainQuery;
-    }
-
-    private DBObject getAttributeQuery(ArrayList<String> att) {
-        BasicDBObjectBuilder match = BasicDBObjectBuilder.start().push("$match");
-        
-        return match.get();
     }
 }
