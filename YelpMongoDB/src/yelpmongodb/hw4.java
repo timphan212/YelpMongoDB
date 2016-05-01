@@ -19,6 +19,7 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -721,17 +722,11 @@ public class hw4 extends javax.swing.JFrame {
         MongoClient client = new MongoClient();
         DB db = client.getDB("db");
         DBCollection coll = db.getCollection("business");
-        BasicDBList and = new BasicDBList();
         String attribute = "";
         
         if(list.size() > 0) {
-            for(String entry : list) {
-                DBObject clause = new BasicDBObject("categories", entry);
-                and.add(clause);
-            }
-            
-            DBObject query = new BasicDBObject("$and", and);
-            List curs = coll.distinct("attributes", query);
+            DBObject mainQuery = mainCategoriesQuery(list);
+            List curs = coll.distinct("attributes", mainQuery);
             
             for(int i = 0; i < curs.size(); i++) {
                 BasicDBObject dbo = (BasicDBObject) curs.get(i);
@@ -864,49 +859,102 @@ public class hw4 extends javax.swing.JFrame {
     }
 
     private void queryBusinesses(String poi, String proximity, ArrayList<String> maincat, ArrayList<String> att) {
-        BasicDBList mainList = new BasicDBList();
-        BasicDBList attList = new BasicDBList();
-        BasicDBList businessList = new BasicDBList();
-        DBObject attquery;
         MongoClient client = new MongoClient();
         DB db = client.getDB("db");
         DBCollection coll = db.getCollection("business");
-        
-        for(String entry : maincat) {
-            DBObject clause = new BasicDBObject("categories", entry);
-            mainList.add(clause);
-        }
-        
-        for(String entry : att) {
-            String[] attribute = entry.split(":");
-            
-            if(attribute.length == 3) {
-                DBObject clause = new BasicDBObject("attributes." + attribute[0] 
-                        + "." + attribute[1], attribute[2]);
-                attList.add(clause);
-            }
-            else {
-                DBObject clause = new BasicDBObject("attributes." + attribute[0], attribute[1]);
-                attList.add(clause);
-            }
-        }
-        
-        DBObject mainquery =  new BasicDBObject("$and", mainList);
-        
-        if(searchSelection.getSelectedIndex() == 0) {
-            attquery = new BasicDBObject("$and", attList);
-        }
-        else {
-            attquery = new BasicDBObject("$or", attList);
-        }
-        
-        businessList.add(mainquery);
+        DBObject mainQuery = mainCategoriesQuery(maincat);
+        DBObject attquery = attributesQuery(att);
+        BasicDBList businessList = new BasicDBList();        
+        businessList.add(mainQuery);
         businessList.add(attquery);
         DBObject businessQuery = new BasicDBObject("$and", businessList);
         DBCursor curs = coll.find(businessQuery);
-        
+
         while(curs.hasNext()) {
             System.out.println(curs.next());
         }
+    }
+    
+    private DBObject mainCategoriesQuery(ArrayList<String> mainList) {
+        BasicDBList mainQueryList = new BasicDBList();
+        
+        for(String entry : mainList) {
+            DBObject clause = new BasicDBObject("categories", entry);
+            mainQueryList.add(clause);
+        }
+        
+        DBObject mainQuery = new BasicDBObject("$and", mainQueryList);
+        
+        return mainQuery;
+    }
+    
+    private DBObject attributesQuery(ArrayList<String> att) {
+        BasicDBList attList = new BasicDBList();
+        DBObject attQuery;
+        
+        for(String entry : att) {
+            String[] attribute = entry.split(":");
+            DBObject clause = attributeTypeFormat(attribute);
+            attList.add(clause);
+        }
+        if(searchSelection.getSelectedIndex() == 0) {
+            attQuery = new BasicDBObject("$and", attList);
+        }
+        else {
+            attQuery = new BasicDBObject("$or", attList);
+        }
+        
+        return attQuery;
+    }
+    
+    private DBObject attributeTypeFormat(String[] attribute) {
+        DBObject clause = null;
+        
+        if(attribute.length == 3) {
+            if(attribute[2].compareTo("false") == 0) {
+                clause = new BasicDBObject("attributes." + attribute[0] 
+                    + "." + attribute[1], false);
+            }
+            else if(attribute[2].compareTo("true") == 0) {
+                clause = new BasicDBObject("attributes." + attribute[0] 
+                    + "." + attribute[1], true);
+            }
+            else if(isInteger(attribute[2])) {
+                clause = new BasicDBObject("attributes." + attribute[0] 
+                    + "." + attribute[1], Integer.parseInt(attribute[2]));
+            }
+            else {
+                clause = new BasicDBObject("attributes." + attribute[0] 
+                    + "." + attribute[1], attribute[2]);
+            }
+        }
+        else {
+            if(attribute[1].compareTo("false") == 0) {
+                clause = new BasicDBObject("attributes." + attribute[0], false);        
+            }
+            else if(attribute[1].compareTo("true") == 0) {
+                clause = new BasicDBObject("attributes." + attribute[0], true);
+            }
+            else if(isInteger(attribute[1])) {
+                clause = new BasicDBObject("attributes." + attribute[0], Integer.parseInt(attribute[1]));
+            }
+            else {
+                clause = new BasicDBObject("attributes." + attribute[0], attribute[1]);
+            }
+        }
+        
+        return clause;
+    }
+    
+    private boolean isInteger(String s) {
+        Scanner sc = new Scanner(s);
+        
+        if(!sc.hasNextInt()) {
+            return false;
+        }
+        
+        sc.nextInt();
+        
+        return !sc.hasNext();
     }
 }
